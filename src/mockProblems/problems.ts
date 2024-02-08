@@ -88,4 +88,12 @@ export const problems: Problem[] = [
     order: 10,
     videoId: "",
   },
+  {
+    id: "top-k-frequent-elements",
+    title: "Top K Frequent Elements",
+    difficulty: "Medium",
+    category: "Arrays & Hashing",
+    order: 11,
+    videoId: "YPTqKIgVk-k",
+  },
 ];
