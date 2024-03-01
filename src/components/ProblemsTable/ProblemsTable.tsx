@@ -13,9 +13,8 @@ import {
   query,
 } from "firebase/firestore";
 import { auth, firestore } from "@/firebase/firebase";
-// import { DBProblem } from "@/utils/types/problem";
-import { useAuthState } from "react-firebase-hooks/auth";
 import { DBProblem } from "@/utils/types/problem-types";
+import { useAuthState } from "react-firebase-hooks/auth";
 
 type ProblemsTableProps = {
   setLoadingProblems: React.Dispatch<React.SetStateAction<boolean>>;
@@ -65,18 +64,17 @@ const ProblemsTable: React.FC<ProblemsTableProps> = ({
                 )}
               </th>
               <td className="px-6 py-4">
-                {/* // Showing the problem code editor link */}
                 {problem.link ? (
                   <Link
                     href={problem.link}
-                    className=" hover:text-blue-600 cursor-pointer"
+                    className="hover:text-blue-600 cursor-pointer"
                     target="_blank"
                   >
                     {problem.title}
                   </Link>
                 ) : (
                   <Link
-                    className="hover:text-blue-300 cursor-pointer"
+                    className="hover:text-blue-600 cursor-pointer"
                     href={`/problems/${problem.id}`}
                   >
                     {problem.title}

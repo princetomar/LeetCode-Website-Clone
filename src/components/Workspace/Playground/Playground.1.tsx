@@ -1,26 +1,19 @@
 import React, { useEffect, useState } from "react";
-import { AiOutlineFullscreen, AiOutlineSetting } from "react-icons/ai";
 import PreferenceNav from "./PreferenceNav/PreferenceNav";
 import Split from "react-split";
 import CodeMirror from "@uiw/react-codemirror";
 import { vscodeDark } from "@uiw/codemirror-theme-vscode";
 import { javascript } from "@codemirror/lang-javascript";
 import EditorFooter from "./EditorFooter";
-import { Problem } from "@/utils/types/problem-types";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, firestore } from "@/firebase/firebase";
 import { toast } from "react-toastify";
 import { useRouter } from "next/router";
 import { problems } from "@/utils/problems";
 import { arrayUnion, doc, updateDoc } from "firebase/firestore";
+import { PlaygroundProps } from "./Playground";
 
-type PlaygroundProps = {
-  problem: Problem;
-  setSuccess: React.Dispatch<React.SetStateAction<boolean>>;
-  setSolved: React.Dispatch<React.SetStateAction<boolean>>;
-};
-
-const Playground: React.FC<PlaygroundProps> = ({
+export const Playground: React.FC<PlaygroundProps> = ({
   problem,
   setSuccess,
   setSolved,
@@ -45,26 +38,23 @@ const Playground: React.FC<PlaygroundProps> = ({
     try {
       userCode = userCode.slice(userCode.indexOf(problem.starterFunctionName));
       const cb = new Function(`return ${userCode}`)();
-      const handler = problems[pid as string].handlerFunction;
-      if (typeof handler === "function") {
-        const success = handler(cb);
-        if (success) {
-          toast.success("Congrats! All test cases passed!", {
-            position: "top-center",
-            autoClose: 3000,
-            theme: "dark",
-          });
-          setSuccess(true);
-          setTimeout(() => {
-            setSuccess(false);
-          }, 4000);
+      const success = problems[pid as string].handlerFunction(cb);
+      if (success) {
+        toast.success("Congrats! All test cases passed!", {
+          position: "top-center",
+          autoClose: 3000,
+          theme: "dark",
+        });
+        setSuccess(true);
+        setTimeout(() => {
+          setSuccess(false);
+        }, 4000);
 
-          const userRef = doc(firestore, "users", user.uid);
-          await updateDoc(userRef, {
-            solvedProblems: arrayUnion(pid),
-          });
-          setSolved(true);
-        }
+        const userRef = doc(firestore, "users", user.uid);
+        await updateDoc(userRef, {
+          solvedProblems: arrayUnion(pid),
+        });
+        setSolved(true);
       }
     } catch (error: any) {
       console.log(error);
@@ -138,8 +128,8 @@ const Playground: React.FC<PlaygroundProps> = ({
             {/* <div className="mr-2 items-start mt-2 text-white">
               <div className="flex flex-wrap items-center gap-y-4">
                 <div
-                  className="font-medium items-center transition-all 
-              focus:outline-none inline-flex bg-dark-fill-3 hover:bg-dark-fill-2 px-4 rounded 
+                  className="font-medium items-center transition-all
+              focus:outline-none inline-flex bg-dark-fill-3 hover:bg-dark-fill-2 px-4 rounded
               relative py-1 cursor-pointer whitespace-nowrap"
                 >
                   Case 1
@@ -192,4 +182,3 @@ const Playground: React.FC<PlaygroundProps> = ({
     </div>
   );
 };
-export default Playground;

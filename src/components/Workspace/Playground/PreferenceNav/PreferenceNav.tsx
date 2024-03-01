@@ -1,9 +1,42 @@
-import React from "react";
-import { AiOutlineFullscreen, AiOutlineSetting } from "react-icons/ai";
+import React, { useEffect, useState } from "react";
+import {
+  AiOutlineFullscreen,
+  AiOutlineFullscreenExit,
+  AiOutlineSetting,
+} from "react-icons/ai";
 
 type PreferenceNavProps = {};
 
 const PreferenceNav: React.FC<PreferenceNavProps> = () => {
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const handleFullScreenClick = () => {
+    if (isFullScreen) {
+      document.exitFullscreen();
+    } else {
+      document.documentElement.requestFullscreen();
+    }
+
+    setIsFullScreen(!isFullScreen);
+  };
+
+  useEffect(() => {
+    function exitHandler(e: any) {
+      if (!document.fullscreenElement) {
+        setIsFullScreen(false);
+        return;
+      }
+
+      setIsFullScreen(true);
+    }
+
+    if (document.addEventListener) {
+      document.addEventListener("fullscreenchange", exitHandler);
+      document.addEventListener("mozfullscreenchange", exitHandler);
+      document.addEventListener("webkitfullscreenchange", exitHandler);
+      document.addEventListener("MSFullscreenChange", exitHandler);
+    }
+  });
+
   return (
     <div className=" bg-dark-layer-2 flex items-center justify-between h-11 w-full">
       <div className="flex items-center text-white">
@@ -24,11 +57,11 @@ const PreferenceNav: React.FC<PreferenceNavProps> = () => {
       <div className="flex items-center m-2">
         <button className="preferenceBtn group">
           <div className="h-4 w-4 text-dark-gray-6 font-bold text-lg">
-            <AiOutlineSetting />
+            {!isFullScreen ? <AiOutlineSetting /> : <AiOutlineFullscreenExit />}
           </div>
           <div className="preferenceBtn-tooltip">Settings</div>
         </button>
-        <button className="preferenceBtn group">
+        <button className="preferenceBtn group" onClick={handleFullScreenClick}>
           <div className="h-4 w-4 text-dark-gray-6 font-bold text-lg">
             <AiOutlineFullscreen />
           </div>
