@@ -19,14 +19,11 @@ type TopbarProps = {
 
 const Topbar: React.FC<TopbarProps> = ({ problemPage }) => {
   const [user] = useAuthState(auth);
-
   const setAuthModalState = useSetRecoilState(authModalState);
-
   const router = useRouter();
 
   const handleProblemChange = (isForward: boolean) => {
     const { order } = problems[router.query.pid as string] as Problem;
-    // if isForward move to next else back
     const direction = isForward ? 1 : -1;
     const nextProblemOrder = order + direction;
     const nextProblemKey = Object.keys(problems).find(
@@ -37,21 +34,22 @@ const Topbar: React.FC<TopbarProps> = ({ problemPage }) => {
       const firstProblemKey = Object.keys(problems).find(
         (key) => problems[key].order === 1
       );
-      router.push(`/problem/${firstProblemKey}`);
+      router.push(`/problems/${firstProblemKey}`);
     } else if (!isForward && !nextProblemKey) {
       const lastProblemKey = Object.keys(problems).find(
         (key) => problems[key].order === Object.keys(problems).length
       );
-      router.push(`/problem/${lastProblemKey}`);
+      router.push(`/problems/${lastProblemKey}`);
     } else {
-      router.push(`/problem/${nextProblemKey}`);
+      router.push(`/problems/${nextProblemKey}`);
     }
   };
+
   return (
     <nav className="relative flex h-[50px] w-full shrink-0 items-center px-5 bg-dark-layer-1 text-dark-gray-7">
       <div
         className={`flex w-full items-center justify-between ${
-          problemPage ? " max-w-[1200px] mx-auto" : ""
+          !problemPage ? "max-w-[1200px] mx-auto" : ""
         }`}
       >
         <Link href="/" className="h-[22px] flex-1">
@@ -59,7 +57,7 @@ const Topbar: React.FC<TopbarProps> = ({ problemPage }) => {
         </Link>
 
         {problemPage && (
-          <div className="flex flex-1 items-center gap-4 justify-center">
+          <div className="flex items-center gap-4 flex-1 justify-center">
             <div
               className="flex items-center justify-center rounded bg-dark-fill-3 hover:bg-dark-fill-2 h-8 w-8 cursor-pointer"
               onClick={() => handleProblemChange(false)}
@@ -67,13 +65,13 @@ const Topbar: React.FC<TopbarProps> = ({ problemPage }) => {
               <FaChevronLeft />
             </div>
             <Link
-              href={"/"}
+              href="/"
               className="flex items-center gap-2 font-medium max-w-[170px] text-dark-gray-8 cursor-pointer"
             >
               <div>
                 <BsList />
               </div>
-              <p>Problems List</p>
+              <p>Problem List</p>
             </Link>
             <div
               className="flex items-center justify-center rounded bg-dark-fill-3 hover:bg-dark-fill-2 h-8 w-8 cursor-pointer"
@@ -83,10 +81,11 @@ const Topbar: React.FC<TopbarProps> = ({ problemPage }) => {
             </div>
           </div>
         )}
+
         <div className="flex items-center space-x-4 flex-1 justify-end">
           <div>
             <a
-              href="https://www.buymeacofee.com/burakorkmezz"
+              href="https://www.buymeacoffee.com/burakorkmezz"
               target="_blank"
               rel="noreferrer"
               className="bg-dark-fill-3 py-1.5 px-3 cursor-pointer rounded text-brand-orange hover:bg-dark-fill-2"
@@ -94,29 +93,31 @@ const Topbar: React.FC<TopbarProps> = ({ problemPage }) => {
               Premium
             </a>
           </div>
-          {user && problemPage && <Timer />}
           {!user && (
             <Link
-              href={"/auth"}
-              onClick={() => {
+              href="/auth"
+              onClick={() =>
                 setAuthModalState((prev) => ({
                   ...prev,
-                  isOpen: false,
+                  isOpen: true,
                   type: "login",
-                }));
-              }}
+                }))
+              }
             >
               <button className="bg-dark-fill-3 py-1 px-2 cursor-pointer rounded ">
                 Sign In
               </button>
             </Link>
           )}
+          {user && problemPage && <Timer />}
           {user && (
             <div className="cursor-pointer group relative">
-              <img
+              <Image
                 src="/avatar.png"
-                alt="user profile img"
-                className="h-8 w-8 rounded-full"
+                alt="Avatar"
+                width={30}
+                height={30}
+                className="rounded-full"
               />
               <div
                 className="absolute top-10 left-2/4 -translate-x-2/4  mx-auto bg-dark-layer-1 text-brand-orange p-2 rounded shadow-lg 

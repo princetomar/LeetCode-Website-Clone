@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from "react";
-import { AiOutlineFullscreen, AiOutlineSetting } from "react-icons/ai";
+import { useState, useEffect } from "react";
 import PreferenceNav from "./PreferenceNav/PreferenceNav";
 import Split from "react-split";
 import CodeMirror from "@uiw/react-codemirror";
@@ -10,9 +9,10 @@ import { Problem } from "@/utils/types/problem-types";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, firestore } from "@/firebase/firebase";
 import { toast } from "react-toastify";
-import { useRouter } from "next/router";
 import { problems } from "@/utils/problems";
+import { useRouter } from "next/router";
 import { arrayUnion, doc, updateDoc } from "firebase/firestore";
+import useLocalStorage from "@/hooks/useLocalStorage";
 
 type PlaygroundProps = {
   problem: Problem;
@@ -20,36 +20,51 @@ type PlaygroundProps = {
   setSolved: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
+export interface ISettings {
+  fontSize: string;
+  settingsModalIsOpen: boolean;
+  dropdownIsOpen: boolean;
+}
+
 const Playground: React.FC<PlaygroundProps> = ({
   problem,
   setSuccess,
   setSolved,
 }) => {
+  const [activeTestCaseId, setActiveTestCaseId] = useState<number>(0);
+  let [userCode, setUserCode] = useState<string>(problem.starterCode);
+
+  const [fontSize, setFontSize] = useLocalStorage("lcc-fontSize", "16px");
+
+  const [settings, setSettings] = useState<ISettings>({
+    fontSize: fontSize,
+    settingsModalIsOpen: false,
+    dropdownIsOpen: false,
+  });
+
   const [user] = useAuthState(auth);
   const {
     query: { pid },
   } = useRouter();
-  const [activeTestCaseId, setActiveTestCaseId] = useState<number>(0);
-  let [userCode, setUserCode] = useState(problem.starterCode);
-  const handleProblemSubmit = async () => {
+
+  const handleSubmit = async () => {
     if (!user) {
       toast.error("Please login to submit your code", {
         position: "top-center",
         autoClose: 3000,
         theme: "dark",
       });
-
       return;
     }
-
     try {
       userCode = userCode.slice(userCode.indexOf(problem.starterFunctionName));
       const cb = new Function(`return ${userCode}`)();
       const handler = problems[pid as string].handlerFunction;
+
       if (typeof handler === "function") {
         const success = handler(cb);
         if (success) {
-          toast.success("Congrats! All test cases passed!", {
+          toast.success("Congrats! All tests passed!", {
             position: "top-center",
             autoClose: 3000,
             theme: "dark",
@@ -67,7 +82,7 @@ const Playground: React.FC<PlaygroundProps> = ({
         }
       }
     } catch (error: any) {
-      console.log(error);
+      console.log(error.message);
       if (
         error.message.startsWith(
           "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:"
@@ -79,16 +94,15 @@ const Playground: React.FC<PlaygroundProps> = ({
           theme: "dark",
         });
       } else {
-        toast.error("Something went wrong while submitting your code", {
+        toast.error(error.message, {
           position: "top-center",
           autoClose: 3000,
           theme: "dark",
         });
       }
-
-      return;
     }
   };
+
   useEffect(() => {
     const code = localStorage.getItem(`code-${pid}`);
     if (user) {
@@ -105,7 +119,8 @@ const Playground: React.FC<PlaygroundProps> = ({
 
   return (
     <div className="flex flex-col bg-dark-layer-1 relative overflow-x-hidden">
-      <PreferenceNav />
+      <PreferenceNav settings={settings} setSettings={setSettings} />
+
       <Split
         className="h-[calc(100vh-94px)]"
         direction="vertical"
@@ -116,52 +131,34 @@ const Playground: React.FC<PlaygroundProps> = ({
           <CodeMirror
             value={userCode}
             theme={vscodeDark}
-            extensions={[javascript()]}
-            style={{ fontSize: 16 }}
             onChange={onChange}
+            extensions={[javascript()]}
+            style={{ fontSize: settings.fontSize }}
           />
         </div>
         <div className="w-full px-5 overflow-auto">
-          {/* Testcase heading */}
+          {/* testcase heading */}
           <div className="flex h-10 items-center space-x-6">
             <div className="relative flex h-full flex-col justify-center cursor-pointer">
               <div className="text-sm font-medium leading-5 text-white">
-                TestCases
+                Testcases
               </div>
               <hr className="absolute bottom-0 h-0.5 w-full rounded-full border-none bg-white" />
             </div>
           </div>
 
-          {/* Cases container */}
           <div className="flex">
-            {/* case 1 */}
-            {/* <div className="mr-2 items-start mt-2 text-white">
-              <div className="flex flex-wrap items-center gap-y-4">
-                <div
-                  className="font-medium items-center transition-all 
-              focus:outline-none inline-flex bg-dark-fill-3 hover:bg-dark-fill-2 px-4 rounded 
-              relative py-1 cursor-pointer whitespace-nowrap"
-                >
-                  Case 1
-                </div>
-              </div>
-            </div>{" "} */}
-            {problem.examples.map((testCase, index) => (
+            {problem.examples.map((example, index) => (
               <div
-                className="mr-2 items-start mt-2 text-white"
-                key={testCase.id}
+                className="mr-2 items-start mt-2 "
+                key={example.id}
                 onClick={() => setActiveTestCaseId(index)}
               >
                 <div className="flex flex-wrap items-center gap-y-4">
                   <div
-                    className={`font-medium items-center transition-all 
-                    focus:outline-none inline-flex bg-dark-fill-3 hover:bg-dark-fill-2 px-4 rounded 
-                    relative py-1 cursor-pointer whitespace-nowrap
-                    ${
-                      activeTestCaseId === index
-                        ? " text-white"
-                        : "text-gray-400"
-                    }`}
+                    className={`font-medium items-center transition-all focus:outline-none inline-flex bg-dark-fill-3 hover:bg-dark-fill-2 relative rounded-lg px-4 py-1 cursor-pointer whitespace-nowrap
+										${activeTestCaseId === index ? "text-white" : "text-gray-500"}
+									`}
                   >
                     Case {index + 1}
                   </div>
@@ -169,26 +166,20 @@ const Playground: React.FC<PlaygroundProps> = ({
               </div>
             ))}
           </div>
-          <div className=" font-semibold my-4">
-            <p className="text-sm font-medium mt-4 text-white">Input :</p>
-            <div
-              className="w-full cursor-text rounded-lg border px-3 py-[10px] bg-dark-fill-3 border-transparent
-             text-white mt-2"
-            >
-              {/* nums: [2,7,11,15], target : 9 */}
+
+          <div className="font-semibold my-4">
+            <p className="text-sm font-medium mt-4 text-white">Input:</p>
+            <div className="w-full cursor-text rounded-lg border px-3 py-[10px] bg-dark-fill-3 border-transparent text-white mt-2">
               {problem.examples[activeTestCaseId].inputText}
             </div>
-            <p className="text-sm font-medium mt-4 text-white">Output :</p>
-            <div
-              className="w-full cursor-text rounded-lg border px-3 py-[10px] bg-dark-fill-3 border-transparent
-             text-white mt-2"
-            >
+            <p className="text-sm font-medium mt-4 text-white">Output:</p>
+            <div className="w-full cursor-text rounded-lg border px-3 py-[10px] bg-dark-fill-3 border-transparent text-white mt-2">
               {problem.examples[activeTestCaseId].outputText}
             </div>
           </div>
         </div>
       </Split>
-      <EditorFooter handleSubmit={handleProblemSubmit} />
+      <EditorFooter handleSubmit={handleSubmit} />
     </div>
   );
 };
