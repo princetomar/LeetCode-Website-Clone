@@ -1,6 +1,7 @@
 import ProblemsTable from "@/components/ProblemsTable/ProblemsTable";
 import Topbar from "@/components/Topbar/Topbar";
 import useHasMounted from "@/hooks/useHasMounted";
+import { Analytics } from "@vercel/analytics/react";
 
 import { useState } from "react";
 
